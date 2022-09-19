@@ -1,4 +1,4 @@
-FROM --platform=arm64 continuumio/miniconda3:latest
+FROM continuumio/miniconda3:latest
 
 WORKDIR /tmp/
 
