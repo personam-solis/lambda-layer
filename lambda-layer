@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+
+import subprocess
+import argparse
+import os
+import zipfile
+
+"""
+Build the parser and all arguments associated with it.
+"""
+
+# Initialize the parser
+parser = argparse.ArgumentParser(description="""
+Create a .zip with all files and layers to be used for AWS Lambda Layers for python
+3.8 and 3.9 functions.
+
+This same program is used to run the Docker container "personamsolis/layermaker", 
+and to generate and run the .zip.
+
+Exit Codes:
+  * 67 - Directory did not exist
+""")
+
+# Add output argument
+parser.add_argument('-o', metavar='output', type=str, required=True,
+                    help='Path to save zipped layer')
+
+# Add python version arguments
+parser.add_argument('-v', metavar='version', type=str, required=True,
+                    choices=["3.8", "3.9"],
+                    help='Specify the version of python to use (3.8, 3.9)')
+
+# Add python version arguments
+parser.add_argument('-p', metavar='version', type=str, required=True,
+                    choices=["3.8", "3.9"],
+                    help='Specify the version of python to use (3.8, 3.9)')
+
+
+# Execute method
+args = parser.parse_args()
+
+
+# Create the directory Exception
+class DirectoryException(Exception):
+    # Constructor or Initializer
+    def __init__(self, value):
+        self.value = value
+
+    # __str__ is to print() the value
+    def __str__(self):
+        return repr(self.value)
+
+
+def check_dir(directory):
+    """
+    Run basic checks on the directories given
+    :param directory: what the user or the system has defined as a directory.
+    :return: nothing. Just quit if there is an error
+    """
+    try:
+        if not os.path.exists(directory):
+            raise DirectoryException()
+    except DirectoryException:
+        exit(67)
+
+
+if __name__ == '__main__':
+    pass

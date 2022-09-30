@@ -9,3 +9,5 @@ RUN conda config --add create_default_packages pip && \
     mkdir -p 3.8/layer/python/lib/python3.8/site-packages
 RUN conda create --name std309 python=3.9
 RUN conda create --name std308 python=3.8
+
+COPY lambda-layer /tmp/lambda-layer
