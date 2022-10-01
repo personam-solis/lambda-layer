@@ -3,7 +3,8 @@
 import subprocess
 import argparse
 import os
-import zipfile
+from zipfile import ZipFile
+from datetime import date
 
 """
 Build the parser and all arguments associated with it.
@@ -23,24 +24,33 @@ Exit Codes:
 
 # Add output argument
 parser.add_argument('-o', metavar='output', type=str, required=True,
-                    help='Path to save zipped layer')
+                    help='Local path to save zipped layer')
 
 # Add python version arguments
 parser.add_argument('-v', metavar='version', type=str, required=True,
                     choices=["3.8", "3.9"],
-                    help='Specify the version of python to use (3.8, 3.9)')
+                    help=r'Specify the version of python to use (3.8, 3.9)')
 
-# Add python version arguments
-parser.add_argument('-p', metavar='version', type=str, required=True,
-                    choices=["3.8", "3.9"],
-                    help='Specify the version of python to use (3.8, 3.9)')
+# Add install packages argument
+parser.add_argument('-i', metavar='install', type=str, required=True,
+                    help=r'What packages to install (use quotes for multiple)')
 
+# Add name argument
+parser.add_argument('-n', metavar='name', type=str, required=True,
+                    help=r'Unique name for saved layer zip file (No white space)')
+
+# Add switch for container
+parser.add_argument('-c', metavar='container', action='store_true', required=False,
+                    help='If this flag is set, then program will run in container')
 
 # Execute method
 args = parser.parse_args()
 
+"""
+Create the directory Exception
+"""
 
-# Create the directory Exception
+
 class DirectoryException(Exception):
     # Constructor or Initializer
     def __init__(self, value):
@@ -51,18 +61,48 @@ class DirectoryException(Exception):
         return repr(self.value)
 
 
+"""
+MAIN PROGRAM
+"""
+
+
 def check_dir(directory):
     """
-    Run basic checks on the directories given
-    :param directory: what the user or the system has defined as a directory.
+    Check if the directories given exist
+    :param directory: User or system defined directory.
     :return: nothing. Just quit if there is an error
     """
     try:
         if not os.path.exists(directory):
-            raise DirectoryException()
+            raise(DirectoryException("Directory {} does not exist".format(directory)))
     except DirectoryException:
         exit(67)
 
+
+def create_zip(directory, zipname):
+    """
+    Create a zip file in the specified directory.
+    :param directory: User or system defined directory.
+    :param zipname: User defined layer name
+    :return:
+    """
+    check_dir(directory)
+    datestamp = date.today().strftime(r'%Y%m%d')
+
+    # Create the zip from a directory
+    with ZipFile('{}_{}.zip'.format(zipname, datestamp), 'w') as zipObj:
+        # Iterate over all files in the dir
+        for folderName, subfolders, filenames in os.walk(directory):
+            for filename in filenames:
+                # Create complete filepath for file in directory
+                filepath = os.path.join(folderName, filename)
+                # Add file to zip
+                zipObj.write(filepath, os.path.basename(filepath))
+
+
+"""
+Unit Test
+"""
 
 if __name__ == '__main__':
     pass
