@@ -23,24 +23,25 @@ Exit Codes:
 """)
 
 # Add output argument
-parser.add_argument('-o', metavar='output', type=str, required=True,
+parser.add_argument('-o', '--output', metavar='output', type=str, required=True,
                     help='Local path to save zipped layer')
 
 # Add python version arguments
-parser.add_argument('-v', metavar='version', type=str, required=True,
+parser.add_argument('-v', '--version', metavar='version', type=str, required=True,
                     choices=["3.8", "3.9"],
                     help=r'Specify the version of python to use (3.8, 3.9)')
 
 # Add install packages argument
-parser.add_argument('-i', metavar='install', type=str, required=True,
+parser.add_argument('-i', '--install', metavar='install', type=str, required=True,
                     help=r'What packages to install (use quotes for multiple)')
 
 # Add name argument
-parser.add_argument('-n', metavar='name', type=str, required=True,
+parser.add_argument('-n', '--name', metavar='name', type=str, required=True,
                     help=r'Unique name for saved layer zip file (No white space)')
 
 # Add switch for container
-parser.add_argument('-c', metavar='container', action='store_true', required=False,
+parser.add_argument('-c', '--container', metavar='container', action='store_true',
+                    required=False, type=bool,
                     help='If this flag is set, then program will run in container')
 
 # Execute method
@@ -64,6 +65,9 @@ class DirectoryException(Exception):
 """
 MAIN PROGRAM
 """
+datestamp = date.today().strftime(r'%Y%m%d')
+zipname = '{}_{}.zip'.format(args.name, datestamp)
+fulldirpath = os.path.join(os.path.abspath(args.output), zipname)
 
 
 def check_dir(directory):
@@ -79,18 +83,17 @@ def check_dir(directory):
         exit(67)
 
 
-def create_zip(directory, zipname):
+def create_zip(directory):
     """
     Create a zip file in the specified directory.
     :param directory: User or system defined directory.
-    :param zipname: User defined layer name
     :return:
     """
+    check_dir('/tmp')
     check_dir(directory)
-    datestamp = date.today().strftime(r'%Y%m%d')
 
     # Create the zip from a directory
-    with ZipFile('{}_{}.zip'.format(zipname, datestamp), 'w') as zipObj:
+    with ZipFile(zipname, 'w') as zipObj:
         # Iterate over all files in the dir
         for folderName, subfolders, filenames in os.walk(directory):
             for filename in filenames:
@@ -100,9 +103,61 @@ def create_zip(directory, zipname):
                 zipObj.write(filepath, os.path.basename(filepath))
 
 
+def build_layer(version, packages):
+    """
+    Install the packages locally in the container within the appropriate dir.
+    :param version: User defined python version
+    :param packages: User defined packages to install
+    :return: Nothing. Just install packages.
+    """
+    # Create Dir
+    layerdir = '/tmp/layer/python/lib/{}/site-packages'.format(version)
+    os.mkdir(layerdir)
+    check_dir(layerdir)
+
+    # Install packages
+    subprocess.run(['pip3', 'install', packages, '-t', layerdir],
+                   stdout=subprocess.DEVNULL)
+
+    # Create ZIP
+    create_zip('/tmp/layer/python')
+
+
+def docker_start():
+    """
+    Runs the Docker container with all of the arguments given
+    :return: Nothing. Just run the container
+    """
+    dockerrun = """"
+    docker container run -d --rm -n layermaker
+    personamsolis/layermaker:latest
+    """
+    dockerexec = """
+    docker container exec layermaker /tmp/lambda-layer
+    """
+    dockercopy = """
+    docker container cp
+    """
+
+    subprocess.run(dockerrun.split(), stdout=subprocess.DEVNULL)
+    subprocess.run([dockerexec.split(), '-c', '-i', args.install, '-n',
+                    args.name, '-v', args.version], stdout=subprocess.DEVNULL)
+    subprocess.run([dockercopy.split(), 'layermaker:/tmp/{}'.format(zipname),
+                    fulldirpath], stdout=subprocess.DEVNULL)
+    subprocess.run(['docker', 'container', 'stop', 'layermaker'],
+                   stdout=subprocess.DEVNULL)
+
+
 """
-Unit Test
+Run program
 """
 
 if __name__ == '__main__':
-    pass
+
+    if args.container:
+
+        build_layer(args.version, args.install)
+
+    else:
+
+        docker_start()
