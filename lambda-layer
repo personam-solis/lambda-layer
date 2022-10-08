@@ -24,30 +24,27 @@ Exit Codes:
 """)
 
 # Add output argument
-parser.add_argument('-o', '--output', metavar='output', type=str, required=True,
+parser.add_argument('-o', '--output', type=str, required=False, default=os.getcwd(),
                     help='Local path to save zipped layer')
 
 # Add python version arguments
-parser.add_argument('-p', '--python', metavar='python', type=str, required=True,
-                    choices=["3.8", "3.9"],
+parser.add_argument('-p', '--python', type=str, required=True, choices=["3.8", "3.9"],
                     help=r'Specify the version of python to use (3.8, 3.9)')
 
 # Add install packages argument
-parser.add_argument('-i', '--install', metavar='install', type=str, required=True,
+parser.add_argument('-i', '--install', type=str, required=True,
                     help=r'What packages to install (use quotes for multiple)')
 
 # Add zip file name argument
-parser.add_argument('-n', '--name', metavar='name', type=str, required=True,
+parser.add_argument('-n', '--name', type=str, required=True,
                     help=r'Unique name for saved layer zip file (No white space)')
 
 # Add switch for container. Default to false
-parser.add_argument('-c', '--container', metavar='container', action='store_true',
-                    required=False, type=bool,
+parser.add_argument('-c', '--container', action='store_true', required=False,
                     help='If this flag is set, then program will run in container')
 
 # Add verbose argument. Default to false
-parser.add_argument('-v', '--verbose', metavar='verbose', action='store_true',
-                    required=False, type=bool,
+parser.add_argument('-v', '--verbose', action='store_true', required=False,
                     help='Turn on verbose for debugging')
 
 # Execute method
