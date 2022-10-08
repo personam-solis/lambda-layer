@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-
+import logging
 import subprocess
 import argparse
 import os
 from zipfile import ZipFile
 from datetime import date
+from sys import stdout
 
 """
 Build the parser and all arguments associated with it.
@@ -165,6 +166,10 @@ Run program
 """
 
 if __name__ == '__main__':
+
+    # Turn on verbose if specified
+    if args.verbose:
+        logging.basicConfig(stream=stdout, level=logging.INFO)
 
     # If the program is running on a container then build the layer, otherwise
     # start the docker container
