@@ -27,7 +27,7 @@ parser.add_argument('-o', '--output', metavar='output', type=str, required=True,
                     help='Local path to save zipped layer')
 
 # Add python version arguments
-parser.add_argument('-v', '--version', metavar='version', type=str, required=True,
+parser.add_argument('-p', '--python', metavar='python', type=str, required=True,
                     choices=["3.8", "3.9"],
                     help=r'Specify the version of python to use (3.8, 3.9)')
 
@@ -35,14 +35,19 @@ parser.add_argument('-v', '--version', metavar='version', type=str, required=Tru
 parser.add_argument('-i', '--install', metavar='install', type=str, required=True,
                     help=r'What packages to install (use quotes for multiple)')
 
-# Add name argument
+# Add zip file name argument
 parser.add_argument('-n', '--name', metavar='name', type=str, required=True,
                     help=r'Unique name for saved layer zip file (No white space)')
 
-# Add switch for container
+# Add switch for container. Default to false
 parser.add_argument('-c', '--container', metavar='container', action='store_true',
                     required=False, type=bool,
                     help='If this flag is set, then program will run in container')
+
+# Add verbose argument. Default to false
+parser.add_argument('-v', '--verbose', metavar='verbose', action='store_true',
+                    required=False, type=bool,
+                    help='Turn on verbose for debugging')
 
 # Execute method
 args = parser.parse_args()
@@ -139,11 +144,18 @@ def docker_start():
     docker container cp
     """
 
+    # Start the docker container
     subprocess.run(dockerrun.split(), stdout=subprocess.DEVNULL)
+
+    # Run the program to create the lambda-layer
     subprocess.run([dockerexec.split(), '-c', '-i', args.install, '-n',
-                    args.name, '-v', args.version], stdout=subprocess.DEVNULL)
+                    args.name, '-p', args.python], stdout=subprocess.DEVNULL)
+
+    # Copy the zip to the specified directory
     subprocess.run([dockercopy.split(), 'layermaker:/tmp/{}'.format(zipname),
                     fulldirpath], stdout=subprocess.DEVNULL)
+
+    # Stop the docker container
     subprocess.run(['docker', 'container', 'stop', 'layermaker'],
                    stdout=subprocess.DEVNULL)
 
@@ -154,9 +166,11 @@ Run program
 
 if __name__ == '__main__':
 
+    # If the program is running on a container then build the layer, otherwise
+    # start the docker container
     if args.container:
 
-        build_layer(args.version, args.install)
+        build_layer(args.python, args.install)
 
     else:
 
