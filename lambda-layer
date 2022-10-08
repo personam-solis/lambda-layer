@@ -131,7 +131,7 @@ def docker_start():
     Runs the Docker container with all of the arguments given
     :return: Nothing. Just run the container
     """
-    dockerrun = """"
+    dockerrun = """
     docker container run -d --rm -n layermaker
     personamsolis/layermaker:latest
     """
