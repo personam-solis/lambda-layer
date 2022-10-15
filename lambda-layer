@@ -6,7 +6,6 @@ import os
 import re
 from zipfile import ZipFile
 from datetime import date
-from sys import stdout
 
 """
 Build the parser and all arguments associated with it.
@@ -130,8 +129,7 @@ def build_layer(version, packages):
     :return: Nothing. Just install packages.
     """
     # Create Dir
-    layerdir = '/tmp/layer/python/lib/{}/site-packages'.format(version)
-    os.mkdir(layerdir)
+    layerdir = '/tmp/layer/python/lib/python{}/site-packages'.format(version)
     check_dir(layerdir)
 
     # Install packages
@@ -159,6 +157,12 @@ def kill_container():
     return print("Continer successfully stopped")
 
 
+# Build logging method
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+
 def docker_start():
     """
     Runs the Docker container with all of the arguments given
@@ -167,17 +171,21 @@ def docker_start():
     set_env(args.python)
 
     dockerrun = """
-    docker container run -td --rm --name layermaker
+    /usr/local/bin/docker container run -td --rm --name layermaker
     personamsolis/layermaker:latest
     """
 
-    dockerexec = "docker container exec layermaker {} lambda-layer".format(condaenv)
+    dockerexec = """
+    /usr/local/bin/docker container exec layermaker {} lambda-layer
+    """.format(condaenv)
 
-    dockercopy = "docker container cp"
+    dockercopy = "/usr/local/bin/docker container cp"
 
     # Start the docker container
     try:
+
         subprocess.run(dockerrun.split(), stdout=subprocess.DEVNULL)
+
     except TypeError:
         print("Could not start Docker container")
         kill_container()
@@ -185,18 +193,29 @@ def docker_start():
 
     # Run the program to create the lambda-layer
     try:
-        subprocess.run([dockerexec.split(), '-c', '-i', args.install, '-n',
-                        args.name, '-p', args.python], stdout=subprocess.DEVNULL)
+
+        if args.verbose:
+            subprocess.run([dockerexec.split(), '-c', '-i', args.install, '-n',
+                           '-v', args.name, '-p', args.python],
+                           stdout=subprocess.DEVNULL)
+        else:
+            subprocess.run([dockerexec.split(), '-c', '-i', args.install, '-n',
+                            args.name, '-p', args.python], stdout=subprocess.DEVNULL)
+
     except TypeError:
+
         print("Could not run the python program in the container")
         kill_container()
         raise OSError
 
     # Copy the zip to the specified directory
     try:
+
         subprocess.run([dockercopy.split(), 'layermaker:/tmp/{}'.format(zipname),
                         fulldirpath], stdout=subprocess.DEVNULL)
+
     except TypeError:
+
         print("Could not copy ZIP from container")
         kill_container()
         raise OSError
@@ -213,7 +232,7 @@ if __name__ == '__main__':
 
     # Turn on verbose if specified
     if args.verbose:
-        logging.basicConfig(stream=stdout, level=logging.INFO)
+        logger.setLevel(logging.DEBUG)
 
     # If the program is running on a container then build the layer, otherwise
     # start the docker container
