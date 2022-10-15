@@ -195,8 +195,8 @@ def docker_start():
     try:
 
         if args.verbose:
-            subprocess.run([dockerexec.split(), '-c', '-i', args.install, '-n',
-                           '-v', args.name, '-p', args.python],
+            subprocess.run([dockerexec.split(), '-c', '-i', args.install, '-v',
+                           '-n', args.name, '-p', args.python],
                            stdout=subprocess.DEVNULL)
         else:
             subprocess.run([dockerexec.split(), '-c', '-i', args.install, '-n',
