@@ -30,13 +30,8 @@ RUN apt-get update && \
     rm -Rf /var/cache/apt && \
     rm -Rf /var/log/apt
 
-# Download the miniconda package for Arch 64 then run
-RUN if [[ `uname -m` =~ aarch64 ]]; then \
-    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-aarch64.sh -O \
-    ./miniconda.sh; fi
-RUN if [[ `uname -m` =~ x86_64 ]]; then \
-    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O \
-    ./miniconda.sh; fi
+# Download the miniconda package for Arm or Intel then run
+RUN  wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-`uname -m`.sh -O ./miniconda.sh
 RUN /bin/bash ./miniconda.sh -b -p /opt/conda
 
 # Create the layer directories
